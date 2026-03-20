@@ -28,7 +28,6 @@ export function drawPolygon(
 
   if (isClosed) {
     if (options.isSubtraction) {
-      // Hatched fill for subtraction zones
       ctx.fillStyle = options.fillColor;
       ctx.fill();
       drawHatch(ctx, screenVerts);
@@ -37,6 +36,14 @@ export function drawPolygon(
       ctx.fill();
     }
   }
+
+  // Rebuild the polygon path since drawHatch replaces it
+  ctx.beginPath();
+  ctx.moveTo(screenVerts[0].x, screenVerts[0].y);
+  for (let i = 1; i < screenVerts.length; i++) {
+    ctx.lineTo(screenVerts[i].x, screenVerts[i].y);
+  }
+  if (isClosed) ctx.closePath();
 
   ctx.strokeStyle = options.strokeColor;
   ctx.lineWidth = options.lineWidth;
