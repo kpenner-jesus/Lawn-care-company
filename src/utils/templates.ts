@@ -71,10 +71,10 @@ export const SHAPE_TEMPLATES: ShapeTemplate[] = [
   },
 ];
 
-/** Offset all vertices so the shape is centered at a given world point */
-export function placeTemplate(template: ShapeTemplate, center: Point): Point[] {
+/** Offset all vertices so the shape is centered at a given world point, with optional scale factor */
+export function placeTemplate(template: ShapeTemplate, center: Point, scale = 1): Point[] {
   return template.vertices.map((v) => ({
-    x: v.x + center.x,
-    y: v.y + center.y,
+    x: v.x * scale + center.x,
+    y: v.y * scale + center.y,
   }));
 }

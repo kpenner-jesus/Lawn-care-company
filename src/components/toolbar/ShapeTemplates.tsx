@@ -9,11 +9,13 @@ export function ShapeTemplates() {
     const template = SHAPE_TEMPLATES.find((t) => t.id === templateId);
     if (!template) return;
 
-    // Place centered at world origin (viewport will center on it)
-    const vertices = placeTemplate(template, { x: 0, y: 0 });
+    if (state.mode === 'place-subtract' && state.mainPolygon) {
+      // Place subtraction zone scaled to ~30% size, centered inside the main polygon
+      const mainVerts = state.mainPolygon.vertices;
+      const cx = mainVerts.reduce((s, v) => s + v.x, 0) / mainVerts.length;
+      const cy = mainVerts.reduce((s, v) => s + v.y, 0) / mainVerts.length;
+      const vertices = placeTemplate(template, { x: cx, y: cy }, 0.3);
 
-    if (state.mode === 'place-subtract') {
-      // Place as subtraction zone
       dispatch({
         type: 'ADD_SUBTRACTION',
         zone: {
@@ -24,7 +26,8 @@ export function ShapeTemplates() {
         },
       });
     } else {
-      // Place as main polygon
+      // Place main polygon centered at world origin
+      const vertices = placeTemplate(template, { x: 0, y: 0 });
       dispatch({
         type: 'PLACE_SHAPE',
         polygon: {

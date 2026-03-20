@@ -48,22 +48,42 @@ export function DrawingCanvas() {
     return () => obs.disconnect();
   }, [updateSize]);
 
-  // Center viewport on first shape placement
+  // Fit shape in viewport when first placed
   useEffect(() => {
-    if (state.mainPolygon && state.viewport.offsetX === 0 && state.viewport.offsetY === 0) {
-      const verts = state.mainPolygon.vertices;
-      const cx = verts.reduce((s, v) => s + v.x, 0) / verts.length;
-      const cy = verts.reduce((s, v) => s + v.y, 0) / verts.length;
-      const { width, height } = sizeRef.current;
-      dispatch({
-        type: 'SET_VIEWPORT',
-        viewport: {
-          ...state.viewport,
-          offsetX: width / 2 - cx * state.viewport.scale,
-          offsetY: height / 2 - cy * state.viewport.scale,
-        },
-      });
+    if (!state.mainPolygon) return;
+    const verts = state.mainPolygon.vertices;
+    if (verts.length < 2) return;
+    const { width, height } = sizeRef.current;
+    if (width === 0 || height === 0) return;
+
+    // Bounding box of the polygon in world coords
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const v of verts) {
+      minX = Math.min(minX, v.x);
+      minY = Math.min(minY, v.y);
+      maxX = Math.max(maxX, v.x);
+      maxY = Math.max(maxY, v.y);
     }
+
+    const shapeW = maxX - minX;
+    const shapeH = maxY - minY;
+    const cx = (minX + maxX) / 2;
+    const cy = (minY + maxY) / 2;
+
+    // Compute scale to fit with generous padding (40% margin on each side)
+    const padding = 0.6; // use 60% of available space
+    const scaleX = (width * padding) / shapeW;
+    const scaleY = (height * padding) / shapeH;
+    const fitScale = Math.min(scaleX, scaleY);
+
+    dispatch({
+      type: 'SET_VIEWPORT',
+      viewport: {
+        scale: fitScale,
+        offsetX: width / 2 - cx * fitScale,
+        offsetY: height / 2 - cy * fitScale,
+      },
+    });
   }, [state.mainPolygon?.id]);
 
   // Render loop
